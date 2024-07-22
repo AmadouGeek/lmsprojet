@@ -1,0 +1,33 @@
+[
+    {
+      "id": "babyfoot",
+      "name": "Babyfoot",
+      "image": "/asset/images/babyfoot.jpg",
+      "description": "Le baby-foot est un jeu de table simulant une partie de football.",
+      "benefits": "Améliore la coordination main-œil, favorise l'esprit d'équipe.",
+      "relaxation": "Permet de se détendre et de s'amuser entre amis.",
+      "rules": "Deux équipes s'affrontent, chacune essayant de marquer des buts.",
+      "history": "Inventé en France dans les années 1940, le baby-foot est devenu populaire dans le monde entier."
+    },
+    {
+      "id": "basketball",
+      "name": "Basketball",
+      "image": "/asset/images/basket.jpg",
+      "description": "Le basketball est un sport d'équipe joué avec un ballon rond.",
+      "benefits": "Améliore la coordination, l'agilité et la forme physique générale.",
+      "relaxation": "Permet de se défouler et de socialiser avec d'autres joueurs.",
+      "rules": "Deux équipes de cinq joueurs s'affrontent pour marquer des paniers dans le panier adverse.",
+      "history": "Inventé en 1891 par James Naismith, le basketball est devenu un sport populaire à travers le monde."
+    },
+    {
+      "id": "handball",
+      "name": "Handball",
+      "image": "/asset/images/handball.jpeg",
+      "description": "Le handball est un sport collectif joué avec un ballon de handball.",
+      "benefits": "Développe la coordination, la rapidité et les réflexes.",
+      "relaxation": "Permet de libérer le stress et de se divertir avec des amis.",
+      "rules": "Deux équipes de sept joueurs s'affrontent pour marquer des buts dans le but adverse.",
+      "history": "Le handball moderne est dérivé de plusieurs jeux traditionnels européens et est devenu un sport olympique en 1936."
+    }
+  ]
+  
