@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { FaBars, FaBell, FaSearch, FaTimes } from 'react-icons/fa';
 import { AiFillDashboard, AiFillFile, AiFillBook, AiFillMessage, AiFillSetting, AiFillQuestionCircle, AiOutlineLogout, AiFillCalendar } from 'react-icons/ai';
 import Link from 'next/link';
+import { collection, getDocs, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { db, addNotification } from '@/db/configfirebase';
 
-interface Formation {
-  id: number;
+interface Demande {
+  id: string;
   title: string;
   date: string;
   time: string;
@@ -15,43 +17,53 @@ interface Formation {
   image: string;
   requestedBy: string;
   speciality: string;
-  requestDate: string;
+  requestDate: Date;
+  confirmed: boolean;
 }
 
-const demandes: Formation[] = [
-  { 
-    id: 1, 
-    title: 'Formation 1', 
-    date: '2024-07-12', 
-    time: '10:00 - 12:00', 
-    description: 'Description de la formation 1', 
-    image: '/pics/formation1.jpg', 
-    requestedBy: 'John Doe', 
-    speciality: 'Informatique', 
-    requestDate: '2024-07-01' 
-  },
-  { 
-    id: 2, 
-    title: 'Formation 2', 
-    date: '2024-07-14', 
-    time: '14:00 - 16:00', 
-    description: 'Description de la formation 2', 
-    image: '/pics/formation2.jpg', 
-    requestedBy: 'Jane Smith', 
-    speciality: 'Gestion', 
-    requestDate: '2024-07-02' 
-  },
-  // Ajouter plus de demandes si nécessaire
-];
-
 const GestionDemandes = () => {
-  const [confirmations, setConfirmations] = useState<{ [key: number]: boolean }>({});
+  const [demandes, setDemandes] = useState<Demande[]>([]);
+  const [confirmations, setConfirmations] = useState<{ [key: string]: boolean }>({});
 
-  const toggleConfirmation = (id: number) => {
+  useEffect(() => {
+    const fetchDemandes = async () => {
+      const demandesCollection = collection(db, 'demandes');
+      const demandesSnapshot = await getDocs(demandesCollection);
+      const demandesList = demandesSnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        requestDate: doc.data().requestDate.toDate(), // Conversion de Timestamp à Date
+      })) as Demande[];
+      setDemandes(demandesList);
+    };
+
+    const unsubscribe = onSnapshot(collection(db, 'demandes'), (snapshot) => {
+      const updatedDemandes = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        requestDate: doc.data().requestDate.toDate(), // Conversion de Timestamp à Date
+      })) as Demande[];
+      setDemandes(updatedDemandes);
+    });
+
+    fetchDemandes();
+    return () => unsubscribe();
+  }, []);
+
+  const toggleConfirmation = async (id: string, confirmed: boolean) => {
+    const demandeRef = doc(db, 'demandes', id);
+    await updateDoc(demandeRef, { confirmed: !confirmed });
+
     setConfirmations({
       ...confirmations,
-      [id]: !confirmations[id],
+      [id]: !confirmed,
     });
+
+    const demande = demandes.find(demande => demande.id === id);
+    if (demande && !confirmed) {
+      // Ajouter une notification pour le formateur
+      await addNotification(demande.requestedBy, `Votre demande pour la formation "${demande.title}" a été confirmée.`);
+    }
   };
 
   return (
@@ -171,15 +183,18 @@ const GestionDemandes = () => {
                   <p>{formation.description}</p>
                   <p className="mt-4">Demandé par : {formation.requestedBy}</p>
                   <p>Spécialité : {formation.speciality}</p>
-                  <p>Date de demande : {formation.requestDate}</p>
+                  <p>Date de demande : {formation.requestDate.toLocaleDateString()}</p>
                   <div className="flex space-x-4 mt-4">
                     <button
-                      onClick={() => toggleConfirmation(formation.id)}
-                      className={`py-2 px-4 rounded ${confirmations[formation.id] ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} hover:${confirmations[formation.id] ? 'bg-green-600' : 'bg-blue-600'} transition duration-300`}
+                      onClick={() => toggleConfirmation(formation.id, formation.confirmed)}
+                      className={`py-2 px-4 rounded ${formation.confirmed ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} hover:${formation.confirmed ? 'bg-green-600' : 'bg-blue-600'} transition duration-300`}
                     >
-                      {confirmations[formation.id] ? 'Confirmée, cliquez pour annuler' : 'Confirmer'}
+                      {formation.confirmed ? 'Confirmée, cliquez pour annuler' : 'Confirmer'}
                     </button>
-                    <button className="py-2 px-4 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300">
+                    <button
+                      onClick={() => deleteDoc(doc(db, 'demandes', formation.id))}
+                      className="py-2 px-4 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
+                    >
                       Refuser
                     </button>
                   </div>

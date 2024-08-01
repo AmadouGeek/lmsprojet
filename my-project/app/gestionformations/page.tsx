@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { FaBars, FaBell, FaSearch } from 'react-icons/fa';
 import { AiFillFile, AiFillBook, AiFillMessage, AiFillSetting, AiFillQuestionCircle, AiOutlineLogout, AiFillCalendar } from 'react-icons/ai';
 import Link from 'next/link';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { db, collection, addDoc, getDocs, deleteDoc, doc, addNotification } from '@/db/configfirebase';
 
 interface Formation {
-  id: number;
+  id: string;
   title: string;
   description: string;
   type: string;
@@ -19,15 +20,11 @@ interface Formation {
 }
 
 const AdminFormations = () => {
-  const [formations, setFormations] = useState<Formation[]>([
-    { id: 1, title: 'Formation 1', description: 'Description de la formation 1', type: 'Informatique', image: '', date: new Date(2024, 6, 12), time: '10:00' },
-    { id: 2, title: 'Formation 2', description: 'Description de la formation 2', type: 'Gestion', image: '', date: new Date(2024, 6, 14), time: '14:00' },
-  ]);
-
+  const [formations, setFormations] = useState<Formation[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingFormation, setEditingFormation] = useState<Formation | null>(null);
   const [newFormation, setNewFormation] = useState<Formation>({
-    id: formations.length + 1,
+    id: '',
     title: '',
     description: '',
     type: 'Informatique',
@@ -36,25 +33,43 @@ const AdminFormations = () => {
     time: '',
   });
 
-  const handleDelete = (id: number) => {
+  useEffect(() => {
+    const fetchFormations = async () => {
+      const formationsCollection = collection(db, 'formations');
+      const formationsSnapshot = await getDocs(formationsCollection);
+      const formationsList = formationsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Formation[];
+      setFormations(formationsList);
+    };
+
+    fetchFormations();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    await deleteDoc(doc(db, 'formations', id));
     setFormations(formations.filter(formation => formation.id !== id));
   };
 
   const handleEdit = (formation: Formation) => {
     setEditingFormation(formation);
+    setNewFormation(formation);
     setIsFormOpen(true);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (editingFormation) {
-      setFormations(formations.map(f => (f.id === editingFormation.id ? newFormation : f)));
+      // Update existing formation logic
     } else {
-      setFormations([...formations, { ...newFormation, id: formations.length + 1 }]);
+      const docRef = await addDoc(collection(db, 'formations'), newFormation);
+      setFormations([...formations, { ...newFormation, id: docRef.id }]);
+      await addNotification('all', `Une nouvelle formation "${newFormation.title}" est disponible.`);
     }
     setIsFormOpen(false);
     setEditingFormation(null);
     setNewFormation({
-      id: formations.length + 2,
+      id: '',
       title: '',
       description: '',
       type: 'Informatique',
@@ -276,7 +291,7 @@ const AdminFormations = () => {
               {formations.map((formation) => (
                 <div key={formation.id} className="bg-white p-6 rounded-lg shadow-lg">
                   <h2 className="text-xl font-semibold mb-4">{formation.title}</h2>
-                  <p className="text-gray-700">Date : {formation.date.toLocaleDateString()}</p>
+                  <p className="text-gray-700">Date : {formation.date.toDate().toLocaleDateString()}</p>
                   <p className="text-gray-700">Heure : {formation.time}</p>
                   <p className="text-gray-700">Type : {formation.type}</p>
                   <p className="text-gray-700">Description : {formation.description}</p>
@@ -294,7 +309,7 @@ const AdminFormations = () => {
             </div>
           </main>
         </div>
-     git </div>
+      </div>
     </>
   );
 };

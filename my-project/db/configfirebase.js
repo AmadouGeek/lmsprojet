@@ -1,8 +1,7 @@
 // lib/firebase.js
-
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
@@ -25,4 +24,14 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const analytics = typeof window !== 'undefined' && 'measurementId' in firebaseConfig ? getAnalytics(app) : null;
 
-export { auth, db, storage, analytics };
+const addNotification = async (userId, message) => {
+  const notificationsCollection = collection(db, 'notifications');
+  await addDoc(notificationsCollection, {
+    userId,
+    message,
+    read: false,
+    timestamp: new Date(),
+  });
+};
+
+export { auth, db, storage, analytics, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, doc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where, addNotification };
