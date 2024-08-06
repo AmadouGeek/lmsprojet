@@ -6,23 +6,25 @@ import { FaBars, FaBell, FaSearch, FaTimes } from 'react-icons/fa';
 import { AiFillDashboard, AiFillFile, AiFillBook, AiFillMessage, AiFillSetting, AiFillQuestionCircle, AiOutlineLogout, AiFillCalendar } from 'react-icons/ai';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/db/configfirebase';
+import { Timestamp } from 'firebase/firestore'; // Assurez-vous d'importer Timestamp
 
 interface Formation {
-  id: number;
+  id: string;
   title: string;
-  date: Date;
-  status: 'planifiée' | 'en cours';
+  startDate: Date | null;
+  endDate: Date | null;
+  startTime: string;
+  endTime: string;
+  location: string;
   description: string;
   image: string;
+  type: string;
+  status: 'planifiée' | 'en cours';
 }
 
-const initialFormations: Formation[] = [
-  { id: 1, title: 'Formation 1', date: new Date(2024, 6, 12), status: 'planifiée', description: 'Description de la formation 1', image: '/pics/formation1.jpg' },
-  { id: 2, title: 'Formation 2', date: new Date(2024, 6, 14), status: 'en cours', description: 'Description de la formation 2', image: '/pics/formation2.jpg' },
-  // Ajouter plus de formations si nécessaire
-];
-
-const notifications = [
+const initialNotifications = [
   { id: 1, type: 'message', content: 'Formateur A vous a envoyé un message.', timestamp: '12:00', link: '/messageadmin' },
   { id: 2, type: 'formation', content: 'Formateur B a postulé pour la formation X.', timestamp: '14:00', link: '/gestiondemandes' },
   // Ajouter plus de notifications si nécessaire
@@ -31,8 +33,27 @@ const notifications = [
 const AdminDashboard = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [formations, setFormations] = useState<Formation[]>(initialFormations);
+  const [formations, setFormations] = useState<Formation[]>([]);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchFormations = async () => {
+      const formationsCollection = collection(db, 'formations');
+      const formationsSnapshot = await getDocs(formationsCollection);
+      const formationsList = formationsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+        };
+      }) as Formation[];
+      setFormations(formationsList);
+    };
+
+    fetchFormations();
+  }, []);
 
   const toggleProfileMenu = () => {
     setIsProfileMenuOpen(!isProfileMenuOpen);
@@ -148,7 +169,7 @@ const AdminDashboard = () => {
                 </button>
                 {isNotificationsOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white bg-opacity-90 rounded-lg shadow-lg py-2">
-                    {notifications.map((notification) => (
+                    {initialNotifications.map((notification) => (
                       <div 
                         key={notification.id} 
                         className="px-4 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100"
@@ -211,7 +232,7 @@ const AdminDashboard = () => {
                   <div key={formation.id} className="bg-white bg-opacity-90 p-6 rounded-lg shadow-lg">
                     <h3 className="text-lg font-semibold mb-2">{formation.title}</h3>
                     <p>{formation.description}</p>
-                    <p>Date: {formation.date.toLocaleDateString()}</p>
+                    <p>Date: {formation.startDate?.toLocaleDateString()}</p>
                     <img src={formation.image} alt={formation.title} className="w-full h-32 object-cover rounded-md mt-2" />
                   </div>
                 ))}

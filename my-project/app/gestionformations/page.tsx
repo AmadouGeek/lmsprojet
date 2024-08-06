@@ -8,6 +8,7 @@ import Link from 'next/link';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { db, collection, addDoc, getDocs, deleteDoc, doc, addNotification } from '@/db/configfirebase';
+import { Timestamp } from 'firebase/firestore';
 
 interface Formation {
   id: string;
@@ -15,8 +16,11 @@ interface Formation {
   description: string;
   type: string;
   image: string;
-  date: Date;
-  time: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  startTime: string;
+  endTime: string;
+  location: string;
 }
 
 const AdminFormations = () => {
@@ -29,18 +33,26 @@ const AdminFormations = () => {
     description: '',
     type: 'Informatique',
     image: '',
-    date: new Date(),
-    time: '',
+    startDate: null,
+    endDate: null,
+    startTime: '',
+    endTime: '',
+    location: '',
   });
 
   useEffect(() => {
     const fetchFormations = async () => {
       const formationsCollection = collection(db, 'formations');
       const formationsSnapshot = await getDocs(formationsCollection);
-      const formationsList = formationsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Formation[];
+      const formationsList = formationsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+        };
+      }) as Formation[];
       setFormations(formationsList);
     };
 
@@ -74,8 +86,11 @@ const AdminFormations = () => {
       description: '',
       type: 'Informatique',
       image: '',
-      date: new Date(),
-      time: '',
+      startDate: null,
+      endDate: null,
+      startTime: '',
+      endTime: '',
+      location: '',
     });
   };
 
@@ -84,8 +99,12 @@ const AdminFormations = () => {
     setNewFormation({ ...newFormation, [name]: value });
   };
 
-  const handleDateChange = (date: Date) => {
-    setNewFormation({ ...newFormation, date });
+  const handleStartDateChange = (date: Date) => {
+    setNewFormation({ ...newFormation, startDate: date });
+  };
+
+  const handleEndDateChange = (date: Date) => {
+    setNewFormation({ ...newFormation, endDate: date });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -260,19 +279,47 @@ const AdminFormations = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700">Date</label>
+                    <label className="block text-gray-700">Date de début</label>
                     <DatePicker
-                      selected={newFormation.date}
-                      onChange={handleDateChange}
+                      selected={newFormation.startDate}
+                      onChange={handleStartDateChange}
                       className="w-full mt-1 p-2 border rounded-md"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700">Heure</label>
+                    <label className="block text-gray-700">Date de fin</label>
+                    <DatePicker
+                      selected={newFormation.endDate}
+                      onChange={handleEndDateChange}
+                      className="w-full mt-1 p-2 border rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700">Heure de début</label>
                     <input
                       type="time"
-                      name="time"
-                      value={newFormation.time}
+                      name="startTime"
+                      value={newFormation.startTime}
+                      onChange={handleInputChange}
+                      className="w-full mt-1 p-2 border rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700">Heure de fin</label>
+                    <input
+                      type="time"
+                      name="endTime"
+                      value={newFormation.endTime}
+                      onChange={handleInputChange}
+                      className="w-full mt-1 p-2 border rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700">Lieu</label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={newFormation.location}
                       onChange={handleInputChange}
                       className="w-full mt-1 p-2 border rounded-md"
                     />
@@ -291,9 +338,11 @@ const AdminFormations = () => {
               {formations.map((formation) => (
                 <div key={formation.id} className="bg-white p-6 rounded-lg shadow-lg">
                   <h2 className="text-xl font-semibold mb-4">{formation.title}</h2>
-                  <p className="text-gray-700">Date : {formation.date.toDate().toLocaleDateString()}</p>
-                  <p className="text-gray-700">Heure : {formation.time}</p>
                   <p className="text-gray-700">Type : {formation.type}</p>
+                  <p className="text-gray-700">Date de début : {formation.startDate?.toLocaleDateString()}</p>
+                  <p className="text-gray-700">Date de fin : {formation.endDate?.toLocaleDateString()}</p>
+                  <p className="text-gray-700">Heure : {formation.startTime} - {formation.endTime}</p>
+                  <p className="text-gray-700">Lieu : {formation.location}</p>
                   <p className="text-gray-700">Description : {formation.description}</p>
                   {formation.image && <img src={formation.image} alt={formation.title} className="mt-4" />}
                   <div className="flex space-x-4 mt-4">

@@ -1,8 +1,8 @@
 // lib/firebase.js
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getFirestore, doc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where, getDoc} from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
@@ -25,13 +25,18 @@ const storage = getStorage(app);
 const analytics = typeof window !== 'undefined' && 'measurementId' in firebaseConfig ? getAnalytics(app) : null;
 
 const addNotification = async (userId, message) => {
-  const notificationsCollection = collection(db, 'notifications');
-  await addDoc(notificationsCollection, {
-    userId,
-    message,
-    read: false,
-    timestamp: new Date(),
-  });
+  try {
+    const notificationsCollection = collection(db, 'notifications');
+    await addDoc(notificationsCollection, {
+      userId,
+      message,
+      read: false,
+      timestamp: new Date(),
+    });
+    console.log('Notification added successfully');
+  } catch (error) {
+    console.error('Error adding notification:', error);
+  }
 };
 
-export { auth, db, storage, analytics, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, doc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where, addNotification };
+export { auth, db, storage, analytics, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, doc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where, addNotification, ref, uploadBytes, getDownloadURL , getDoc};

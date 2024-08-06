@@ -8,12 +8,17 @@ import Link from 'next/link';  // Assurez-vous d'importer Link ici
 import { collection, addDoc, deleteDoc, doc, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth, addNotification } from '@/db/configfirebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { Timestamp } from 'firebase/firestore';
 
 interface Formation {
   id: string;
   title: string;
-  date: string;
-  time: string;
+  startDate: Date;
+  endDate: Date;
+  startTime: string;
+  endTime: string;
+  location: string;
+  description: string;
   image: string;
   type: string;
 }
@@ -33,10 +38,15 @@ const Dashboard = () => {
     const fetchFormations = async () => {
       const formationsCollection = collection(db, 'formations');
       const formationsSnapshot = await getDocs(formationsCollection);
-      const formationsList = formationsSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      })) as Formation[];
+      const formationsList = formationsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+        };
+      }) as Formation[];
       setFormations(formationsList);
     };
 
@@ -98,7 +108,7 @@ const Dashboard = () => {
   const types = Array.from(new Set(formations.map(formation => formation.type)));
 
   const filteredFormations = filter === 'month' && selectedMonth !== null
-    ? formations.filter(f => new Date(f.date).getMonth() === selectedMonth)
+    ? formations.filter(f => f.startDate && f.startDate.getMonth() === selectedMonth)
     : filter === 'type' && selectedType !== null
     ? formations.filter(f => f.type === selectedType)
     : formations;
@@ -259,8 +269,11 @@ const Dashboard = () => {
                   <img src={formation.image} alt={formation.title} className="w-full h-32 object-cover rounded-md mb-4" />
                   <h2 className="text-xl font-semibold mb-2">{formation.title}</h2>
                   <p>Type: {formation.type}</p>
-                  <p>Date: {new Date(formation.date).toLocaleDateString()}</p>
-                  <p>Heure: {formation.time}</p>
+                  <p>Date de début: {formation.startDate?.toLocaleDateString()}</p>
+                  <p>Date de fin: {formation.endDate?.toLocaleDateString()}</p>
+                  <p>Heure: {formation.startTime} - {formation.endTime}</p>
+                  <p>Lieu: {formation.location}</p>
+                  <p>Description: {formation.description}</p>
                   <button
                     onClick={() => openModal(formation)}
                     className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-300"
@@ -288,8 +301,11 @@ const Dashboard = () => {
               <div>
                 <h2 className="text-2xl font-semibold mb-4">{selectedFormation.title}</h2>
                 <p className="mb-2">Type: {selectedFormation.type}</p>
-                <p className="mb-2">Date: {new Date(selectedFormation.date).toLocaleDateString()}</p>
-                <p className="mb-2">Heure: {selectedFormation.time}</p>
+                <p className="mb-2">Date de début: {selectedFormation.startDate?.toLocaleDateString()}</p>
+                <p className="mb-2">Date de fin: {selectedFormation.endDate?.toLocaleDateString()}</p>
+                <p className="mb-2">Heure: {selectedFormation.startTime} - {selectedFormation.endTime}</p>
+                <p className="mb-2">Lieu: {selectedFormation.location}</p>
+                <p className="mb-2">Description: {selectedFormation.description}</p>
                 <img src={selectedFormation.image} alt={selectedFormation.title} className="w-full h-48 object-cover rounded-md mb-4" />
                 <button
                   onClick={closeModal}

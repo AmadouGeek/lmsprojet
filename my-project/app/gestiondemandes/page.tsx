@@ -7,12 +7,16 @@ import { AiFillDashboard, AiFillFile, AiFillBook, AiFillMessage, AiFillSetting, 
 import Link from 'next/link';
 import { collection, getDocs, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db, addNotification } from '@/db/configfirebase';
+import { Timestamp } from 'firebase/firestore';
 
 interface Demande {
   id: string;
   title: string;
-  date: string;
-  time: string;
+  startDate: Date;
+  endDate: Date;
+  startTime: string;
+  endTime: string;
+  location: string;
   description: string;
   image: string;
   requestedBy: string;
@@ -29,20 +33,30 @@ const GestionDemandes = () => {
     const fetchDemandes = async () => {
       const demandesCollection = collection(db, 'demandes');
       const demandesSnapshot = await getDocs(demandesCollection);
-      const demandesList = demandesSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        requestDate: doc.data().requestDate.toDate(), // Conversion de Timestamp à Date
-      })) as Demande[];
+      const demandesList = demandesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+          requestDate: data.requestDate ? (data.requestDate as Timestamp).toDate() : null,
+        };
+      }) as Demande[];
       setDemandes(demandesList);
     };
 
     const unsubscribe = onSnapshot(collection(db, 'demandes'), (snapshot) => {
-      const updatedDemandes = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        requestDate: doc.data().requestDate.toDate(), // Conversion de Timestamp à Date
-      })) as Demande[];
+      const updatedDemandes = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+          requestDate: data.requestDate ? (data.requestDate as Timestamp).toDate() : null,
+        };
+      }) as Demande[];
       setDemandes(updatedDemandes);
     });
 
@@ -178,12 +192,13 @@ const GestionDemandes = () => {
                 <div key={formation.id} className="bg-white p-6 rounded-lg shadow-lg">
                   <img src={formation.image} alt={formation.title} className="w-full h-32 object-cover rounded-md mb-4" />
                   <h2 className="text-xl font-semibold mb-2">{formation.title}</h2>
-                  <p>Date : {formation.date}</p>
-                  <p>Heure : {formation.time}</p>
+                  <p>Date de début : {formation.startDate?.toLocaleDateString()}</p>
+                  <p>Date de fin : {formation.endDate?.toLocaleDateString()}</p>
+                  <p>Heure : {formation.startTime} - {formation.endTime}</p>
                   <p>{formation.description}</p>
                   <p className="mt-4">Demandé par : {formation.requestedBy}</p>
                   <p>Spécialité : {formation.speciality}</p>
-                  <p>Date de demande : {formation.requestDate.toLocaleDateString()}</p>
+                  <p>Date de demande : {formation.requestDate?.toLocaleDateString()}</p>
                   <div className="flex space-x-4 mt-4">
                     <button
                       onClick={() => toggleConfirmation(formation.id, formation.confirmed)}

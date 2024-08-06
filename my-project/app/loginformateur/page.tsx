@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
-import { auth, db, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, doc, setDoc, addNotification } from '@/db/configfirebase';
+import { auth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from '@/db/configfirebase';
 
 const LoginPage = () => {
   const router = useRouter();
@@ -13,15 +13,7 @@ const LoginPage = () => {
   const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName,
-        photoURL: user.photoURL
-      });
-      await addNotification(user.uid, 'Vous êtes maintenant connecté.');
+      await signInWithPopup(auth, provider);
       router.push('/dashboard');
     } catch (error) {
       console.error('Error signing in with Google: ', error);
@@ -31,36 +23,15 @@ const LoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      await addNotification(userCredential.user.uid, 'Vous êtes maintenant connecté.');
+      await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
     } catch (error) {
       console.error('Error signing in: ', error);
     }
   };
 
-  const handleSignUp = async () => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email
-      });
-      await addNotification(user.uid, 'Votre compte a été créé avec succès.');
-      router.push('/dashboard');
-    } catch (error) {
-      console.error('Error signing up: ', error);
-    }
-  };
-
-  const handlePasswordReset = async () => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-      alert('Password reset email sent!');
-    } catch (error) {
-      console.error('Error sending password reset email: ', error);
-    }
+  const handleSignUpRedirect = () => {
+    router.push('/creationcompte');
   };
 
   return (
@@ -107,12 +78,12 @@ const LoginPage = () => {
                   type="checkbox"
                   className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-900">Remember my preference</label>
+                <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-900">Remember me</label>
               </div>
               <div className="text-sm">
                 <button
                   type="button"
-                  onClick={handlePasswordReset}
+                  onClick={() => router.push('/forgot-password')}
                   className="font-medium text-red-600 hover:text-red-500"
                 >
                   Forgot Password?
@@ -128,7 +99,7 @@ const LoginPage = () => {
               </button>
             </div>
             <div className="text-center text-sm text-gray-600">
-              <p>Don't have an account? <button type="button" onClick={handleSignUp} className="font-medium text-red-600 hover:text-red-500">Sign up</button></p>
+              <p>Don't have an account? <button type="button" onClick={handleSignUpRedirect} className="font-medium text-red-600 hover:text-red-500">Create one</button></p>
             </div>
             <div className="mt-6">
               <button
