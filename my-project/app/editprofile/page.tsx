@@ -1,10 +1,9 @@
-// pages/editprofile.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
-import { auth, db, storage, doc, getDoc, updateDoc, ref, uploadBytes, getDownloadURL } from '@/db/configfirebase';
+import { auth, db, storage, doc, getDoc, setDoc, ref, uploadBytes, getDownloadURL } from '@/db/configfirebase';
 import Sidebar from '@/app/components/sidebar';
 import Navbar from '@/app/components/navbar';
 
@@ -54,6 +53,7 @@ const EditProfile = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(''); // Reset error state
     try {
       const user = auth.currentUser;
       if (user) {
@@ -65,15 +65,15 @@ const EditProfile = () => {
           photoURL = await getDownloadURL(storageRef);
         }
 
-        await updateDoc(doc(db, 'users', user.uid), {
+        await setDoc(doc(db, 'users', user.uid), {
           ...userData,
           photoURL,
         });
 
-        router.push('/profile');
+        router.push('/account');
       }
     } catch (error) {
-      console.error('Error updating profile: ', error);
+      console.error('Error updating profile:', error);
       setError('Erreur lors de la mise à jour du profil. Veuillez réessayer.');
     }
   };
@@ -213,7 +213,7 @@ const EditProfile = () => {
                   <button
                     type="button"
                     className="bg-red-500 text-white px-4 py-2 rounded"
-                    onClick={() => router.push('/profile')}
+                    onClick={() => router.push('/account')}
                   >
                     Annuler
                   </button>
