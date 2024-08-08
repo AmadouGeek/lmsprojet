@@ -1,30 +1,35 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { FaBell, FaSearch, FaBars, FaTimes, FaPaperPlane } from 'react-icons/fa';
 import { AiFillHome, AiFillCalendar, AiFillBook, AiFillMessage, AiFillQuestionCircle, AiFillSetting, AiOutlineLogout } from 'react-icons/ai';
-
-const messages = [
-  { id: 1, sender: 'admin', text: 'Bonjour, comment ça va ?', timestamp: '12:00', profileImg: '/asset/images/admin-profile.jpg' },
-  { id: 2, sender: 'formateur', text: 'Ça va bien, merci. Et vous ?', timestamp: '12:01', profileImg: '/asset/images/formateur-profile.jpg' },
-  // Ajouter plus de messages si nécessaire
-];
+import { db, auth, collection, addDoc, query, orderBy, onSnapshot } from '@/db/configfirebase';
 
 const Messages = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
+  const [messages, setMessages] = useState<any[]>([]);
 
   const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const sendMessage = () => {
+  useEffect(() => {
+    const q = query(collection(db, `discussions/1/messages`), orderBy('timestamp', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const messagesList = snapshot.docs.map(doc => doc.data());
+      setMessages(messagesList);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const sendMessage = async () => {
     if (messageText.trim() !== "") {
-      messages.push({
-        id: messages.length + 1,
+      await addDoc(collection(db, `discussions/1/messages`), {
         sender: 'formateur',
         text: messageText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date(),
         profileImg: '/asset/images/formateur-profile.jpg'
       });
       setMessageText("");
@@ -132,11 +137,10 @@ const Messages = () => {
                     />
                   )}
                   <div
-                    className={`p-4 rounded-lg shadow-md max-w-xs ${message.sender === 'formateur' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'
-                      }`}
+                    className={`p-4 rounded-lg shadow-md max-w-xs ${message.sender === 'formateur' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}`}
                   >
                     <p className="mb-1">{message.text}</p>
-                    <span className="text-xs">{message.timestamp}</span>
+                    <span className="text-xs">{new Date(message.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   {message.sender === 'formateur' && (
                     <img

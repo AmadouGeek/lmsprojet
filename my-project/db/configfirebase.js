@@ -1,7 +1,7 @@
 // lib/firebase.js
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where, getDoc} from 'firebase/firestore';
+import { getFirestore, doc, setDoc, collection, addDoc, getDocs, updateDoc,orderBy, onSnapshot,deleteDoc, query, where, getDoc} from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
@@ -39,4 +39,4 @@ const addNotification = async (userId, message) => {
   }
 };
 
-export { auth, db, storage, analytics, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, doc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where, addNotification, ref, uploadBytes, getDownloadURL , getDoc};
+export { auth, db, storage, analytics, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, doc, setDoc, collection, addDoc,orderBy, onSnapshot, getDocs, updateDoc, deleteDoc, query, where, addNotification, ref, uploadBytes, getDownloadURL , getDoc};
