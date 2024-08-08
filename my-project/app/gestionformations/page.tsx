@@ -364,3 +364,52 @@ const AdminFormations = () => {
 };
 
 export default AdminFormations;
+
+
+import React from 'react';
+
+const MyTrainings = () => {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Mes Formations</h1>
+
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-2">Formations en Cours</h2>
+        <div className="bg-white shadow-md rounded-lg p-4 mb-4 flex">
+          <img src="/formation1.jpg" alt="Formation Image" className="w-24 h-24 rounded-lg mr-4" />
+          <div className="flex-grow">
+            <h3 className="text-lg font-bold">Nom de la Formation</h3>
+            <p>Type: Informatique</p>
+            <p>Dates: 01/09/2024 - 30/09/2024</p>
+            <p>Horaires: 14:00 - 16:00</p>
+            <div className="mt-2">
+              <button className="bg-blue-500 text-white px-4 py-2 rounded mr-2">Détails</button>
+              <button className="bg-gray-500 text-white px-4 py-2 rounded">Modifier</button>
+            </div>
+          </div>
+        </div>
+        {/* Répéter cette section pour chaque formation en cours */}
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Formations Terminées</h2>
+        <div className="bg-white shadow-md rounded-lg p-4 mb-4 flex items-center">
+          <img src="/formation2.jpg" alt="Formation Image" className="w-24 h-24 rounded-lg mr-4" />
+          <div className="flex-grow">
+            <h3 className="text-lg font-bold">Nom de la Formation</h3>
+            <p>Type: Marketing</p>
+            <p>Dates: 01/08/2024 - 31/08/2024</p>
+            <p>Horaires: 10:00 - 12:00</p>
+            <div className="mt-2">
+              <button className="bg-blue-500 text-white px-4 py-2 rounded">Détails</button>
+            </div>
+          </div>
+          <span className="text-green-500 text-2xl">✔</span>
+        </div>
+        {/* Répéter cette section pour chaque formation terminée */}
+      </div>
+    </div>
+  );
+};
+
+export default MyTrainings;
