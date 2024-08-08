@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
@@ -20,9 +20,13 @@ interface Demande {
   description: string;
   image: string;
   requestedBy: string;
-  speciality: string;
   requestDate: Date;
   confirmed: boolean;
+  requesterDetails: {
+    name: string;
+    profession: string;
+    domain: string;
+  } | null;
 }
 
 const GestionDemandes = () => {
@@ -41,6 +45,7 @@ const GestionDemandes = () => {
           startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
           endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
           requestDate: data.requestDate ? (data.requestDate as Timestamp).toDate() : null,
+          requesterDetails: data.requesterDetails || null,
         };
       }) as Demande[];
       setDemandes(demandesList);
@@ -55,6 +60,7 @@ const GestionDemandes = () => {
           startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
           endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
           requestDate: data.requestDate ? (data.requestDate as Timestamp).toDate() : null,
+          requesterDetails: data.requesterDetails || null,
         };
       }) as Demande[];
       setDemandes(updatedDemandes);
@@ -188,26 +194,33 @@ const GestionDemandes = () => {
           <main className="flex-1 p-8 bg-gray-50 overflow-y-auto">
             <h1 className="text-2xl font-semibold mb-4">Gérer les Demandes de Formations</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {demandes.map((formation) => (
-                <div key={formation.id} className="bg-white p-6 rounded-lg shadow-lg">
-                  <img src={formation.image} alt={formation.title} className="w-full h-32 object-cover rounded-md mb-4" />
-                  <h2 className="text-xl font-semibold mb-2">{formation.title}</h2>
-                  <p>Date de début : {formation.startDate?.toLocaleDateString()}</p>
-                  <p>Date de fin : {formation.endDate?.toLocaleDateString()}</p>
-                  <p>Heure : {formation.startTime} - {formation.endTime}</p>
-                  <p>{formation.description}</p>
-                  <p className="mt-4">Demandé par : {formation.requestedBy}</p>
-                  <p>Spécialité : {formation.speciality}</p>
-                  <p>Date de demande : {formation.requestDate?.toLocaleDateString()}</p>
+              {demandes.map((demande) => (
+                <div key={demande.id} className="bg-white p-6 rounded-lg shadow-lg">
+                  <img src={demande.image} alt={demande.title} className="w-full h-32 object-cover rounded-md mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">{demande.title}</h2>
+                  <p>Date de début : {demande.startDate?.toLocaleDateString()}</p>
+                  <p>Date de fin : {demande.endDate?.toLocaleDateString()}</p>
+                  <p>Heure : {demande.startTime} - {demande.endTime}</p>
+                  <p>{demande.description}</p>
+                  {demande.requesterDetails ? (
+                    <>
+                      <p className="mt-4">Demandé par : {demande.requesterDetails.name}</p>
+                      <p>Profession : {demande.requesterDetails.profession}</p>
+                      <p>Domaine d'intervention : {demande.requesterDetails.domain}</p>
+                    </>
+                  ) : (
+                    <p className="mt-4 text-red-500">Détails du formateur indisponibles</p>
+                  )}
+                  <p>Date de demande : {demande.requestDate?.toLocaleDateString()}</p>
                   <div className="flex space-x-4 mt-4">
                     <button
-                      onClick={() => toggleConfirmation(formation.id, formation.confirmed)}
-                      className={`py-2 px-4 rounded ${formation.confirmed ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} hover:${formation.confirmed ? 'bg-green-600' : 'bg-blue-600'} transition duration-300`}
+                      onClick={() => toggleConfirmation(demande.id, demande.confirmed)}
+                      className={`py-2 px-4 rounded ${demande.confirmed ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} hover:${demande.confirmed ? 'bg-green-600' : 'bg-blue-600'} transition duration-300`}
                     >
-                      {formation.confirmed ? 'Confirmée, cliquez pour annuler' : 'Confirmer'}
+                      {demande.confirmed ? 'Confirmée, cliquez pour annuler' : 'Confirmer'}
                     </button>
                     <button
-                      onClick={() => deleteDoc(doc(db, 'demandes', formation.id))}
+                      onClick={() => deleteDoc(doc(db, 'demandes', demande.id))}
                       className="py-2 px-4 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
                     >
                       Refuser
