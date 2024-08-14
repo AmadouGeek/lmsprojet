@@ -70,10 +70,6 @@ const Messages = () => {
                 <span>Calendrier</span>
               </a>
               <div className="flex-1"></div>
-              <a href="/help" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                <AiFillQuestionCircle className="text-blue-600" />
-                <span>Help</span>
-              </a>
               <a href="/account" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
                 <AiFillSetting className="text-blue-600" />
                 <span>Account</span>

@@ -136,18 +136,6 @@ const GestionDemandes = () => {
                   <span>Account</span>
                 </div>
               </Link>
-              <Link href="/parametres" passHref>
-                <div className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillSetting className="text-blue-600" />
-                  <span>Paramètres</span>
-                </div>
-              </Link>
-              <Link href="/help" passHref>
-                <div className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillQuestionCircle className="text-blue-600" />
-                  <span>Help</span>
-                </div>
-              </Link>
               <Link href="/logout" passHref>
                 <div className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
                   <AiOutlineLogout className="text-blue-600" />
