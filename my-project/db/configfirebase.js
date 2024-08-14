@@ -1,7 +1,6 @@
-// lib/firebase.js
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, collection, addDoc, getDocs, updateDoc,orderBy, onSnapshot,deleteDoc, query, where, getDoc} from 'firebase/firestore';
+import { getFirestore, doc, setDoc, collection, addDoc, getDocs, updateDoc, orderBy, onSnapshot, deleteDoc, query, where, getDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
@@ -15,20 +14,9 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Vérifiez les valeurs des variables d'environnement
-console.log("Firebase API Key:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-console.log("Firebase Auth Domain:", process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
-console.log("Firebase Project ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
-console.log("Firebase Storage Bucket:", process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
-console.log("Firebase Messaging Sender ID:", process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID);
-console.log("Firebase App ID:", process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
-console.log("Firebase Measurement ID:", process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID);
-
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase services
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
@@ -49,4 +37,4 @@ const addNotification = async (userId, message) => {
   }
 };
 
-export { auth, db, storage, analytics, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, doc, setDoc, collection, addDoc,orderBy, onSnapshot, getDocs, updateDoc, deleteDoc, query, where, addNotification, ref, uploadBytes, getDownloadURL , getDoc};
+export { auth, db, storage, analytics, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, doc, setDoc, collection, addDoc, orderBy, onSnapshot, getDocs, updateDoc, deleteDoc, query, where, addNotification, ref, uploadBytes, getDownloadURL, getDoc };

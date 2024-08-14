@@ -21,6 +21,7 @@ const EditProfile = () => {
     photoURL: '',
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -53,7 +54,8 @@ const EditProfile = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); // Reset error state
+    setError('');
+    setLoading(true); // Set loading to true
     try {
       const user = auth.currentUser;
       if (user) {
@@ -75,6 +77,8 @@ const EditProfile = () => {
     } catch (error) {
       console.error('Error updating profile:', error);
       setError('Erreur lors de la mise à jour du profil. Veuillez réessayer.');
+    } finally {
+      setLoading(false); // Set loading to false when done
     }
   };
 
@@ -209,6 +213,7 @@ const EditProfile = () => {
                   </div>
                 </div>
                 {error && <div className="text-red-500 text-sm">{error}</div>}
+                {loading && <div className="text-blue-500 text-sm">Mise à jour en cours...</div>}
                 <div className="flex justify-end space-x-4">
                   <button
                     type="button"
@@ -220,6 +225,7 @@ const EditProfile = () => {
                   <button
                     type="submit"
                     className="bg-blue-500 text-white px-4 py-2 rounded"
+                    disabled={loading}
                   >
                     Sauvegarder
                   </button>

@@ -1,4 +1,3 @@
-// pages/profile.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -7,6 +6,7 @@ import { auth, db, doc, getDoc } from '@/db/configfirebase';
 import Head from 'next/head';
 import Sidebar from '@/app/components/sidebar';
 import Navbar from '@/app/components/navbar';
+import Image from 'next/image';
 
 const ProfilePage = () => {
   const router = useRouter();
@@ -19,16 +19,18 @@ const ProfilePage = () => {
     const fetchUserData = async () => {
       try {
         const user = auth.currentUser;
-        if (user) {
-          const docRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setUserData(docSnap.data());
-          } else {
-            setError('No user data found');
-          }
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
         } else {
-          setError('No user is currently signed in');
+          setError('No user data found');
         }
       } catch (err) {
         setError('Failed to fetch user data');
@@ -36,19 +38,24 @@ const ProfilePage = () => {
         setLoading(false);
       }
     };
+
     fetchUserData();
-  }, []);
+  }, [router]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-xl font-semibold text-gray-700">Chargement...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return <div className="text-red-500 text-center">{error}</div>;
   }
 
   return (
@@ -68,10 +75,12 @@ const ProfilePage = () => {
             <div className="bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
               <div className="flex items-center justify-between px-4 py-4 bg-red-600 text-white">
                 <div className="flex items-center">
-                  <img
+                  <Image
                     src={userData.photoURL || '/pics/profile-placeholder.png'}
                     alt="Profile Picture"
-                    className="w-24 h-24 rounded-full border-4 border-white mr-4"
+                    className="rounded-full border-4 border-white mr-4"
+                    width={96}
+                    height={96}
                   />
                   <div>
                     <h2 className="text-2xl font-semibold">{userData.firstName} {userData.lastName}</h2>

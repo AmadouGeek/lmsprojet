@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/app/components/navbar';
 import Sidebar from '@/app/components/sidebar';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/db/configfirebase';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { db, auth } from '@/db/configfirebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 interface Formation {
   id: string;
@@ -16,7 +17,12 @@ interface Formation {
   status: string;
   location: string;
   description: string;
+}
+
+interface Demande {
+  formationId: string;
   requestedBy: string;
+  confirmed: boolean;
 }
 
 const Formations: React.FC = () => {
@@ -25,22 +31,44 @@ const Formations: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedFormation, setSelectedFormation] = useState<Formation | null>(null);
-  const user = { displayName: "John Doe" }; // Remplacez par les données utilisateur réelles
+  const [user] = useAuthState(auth);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFormations = async () => {
-      const formationsRef = collection(db, 'formations');
-      const formationsQuery = query(formationsRef, where('requestedBy', '==', user.displayName));
-      const formationsSnapshot = await getDocs(formationsQuery);
-      const formationsList = formationsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Formation[];
-      setFormations(formationsList);
+      setLoading(true);
+      setError(null);
+      try {
+        if (user) {
+          const demandesRef = collection(db, 'demandes');
+          const demandesQuery = query(demandesRef, where('requestedBy', '==', user.uid), where('confirmed', '==', true));
+          const demandesSnapshot = await getDocs(demandesQuery);
+
+          const formationsList: Formation[] = [];
+
+          for (const demandeDoc of demandesSnapshot.docs) {
+            const demandeData = demandeDoc.data() as Demande;
+            const formationDocRef = doc(db, 'formations', demandeData.formationId);
+            const formationDocSnap = await getDoc(formationDocRef);
+
+            if (formationDocSnap.exists()) {
+              const formationData = formationDocSnap.data() as Omit<Formation, 'id'>;
+              formationsList.push({ id: formationDocSnap.id, ...formationData });
+            }
+          }
+
+          setFormations(formationsList);
+        }
+      } catch (err) {
+        setError('Failed to load formations. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchFormations();
-  }, [user.displayName]);
+  }, [user]);
 
   const handleMonthFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setMonthFilter(event.target.value);
@@ -75,55 +103,63 @@ const Formations: React.FC = () => {
         <Navbar toggleSidebar={toggleSidebar} user={user} />
         <main className="flex-1 p-8 bg-gray-50">
           <h1 className="text-3xl font-bold mb-4">Mes Formations</h1>
-          <div className="flex mb-4">
-            <select
-              value={monthFilter}
-              onChange={handleMonthFilterChange}
-              className="mr-4 p-2 border rounded"
-            >
-              <option value="">Tous les mois</option>
-              <option value="-01-">Janvier</option>
-              <option value="-02-">Février</option>
-              <option value="-03-">Mars</option>
-              <option value="-04-">Avril</option>
-              <option value="-05-">Mai</option>
-              <option value="-06-">Juin</option>
-              <option value="-07-">Juillet</option>
-              <option value="-08-">Août</option>
-              <option value="-09-">Septembre</option>
-              <option value="-10-">Octobre</option>
-              <option value="-11-">Novembre</option>
-              <option value="-12-">Décembre</option>
-            </select>
-            <select
-              value={typeFilter}
-              onChange={handleTypeFilterChange}
-              className="p-2 border rounded"
-            >
-              <option value="">Tous les types</option>
-              <option value="Informatique">Informatique</option>
-              <option value="Marketing">Marketing</option>
-              {/* Ajoutez d'autres options de types ici */}
-            </select>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredFormations.map((formation) => (
-              <div key={formation.id} className="bg-white shadow-md rounded-lg overflow-hidden">
-                <div className="p-4">
-                  <h2 className="text-xl font-bold mb-2">{formation.title}</h2>
-                  <p className="text-gray-600 mb-2">{formation.type}</p>
-                  <div className="flex justify-between items-center">
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={() => openModal(formation)}>
-                      Détails
-                    </button>
-                    <p className={`text-sm font-semibold mt-2 ${formation.status === 'Terminée' ? 'text-green-600' : 'text-blue-600'}`}>
-                      {formation.status}
-                    </p>
-                  </div>
-                </div>
+          {loading ? (
+            <p>Chargement des formations...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : (
+            <>
+              <div className="flex mb-4">
+                <select
+                  value={monthFilter}
+                  onChange={handleMonthFilterChange}
+                  className="mr-4 p-2 border rounded"
+                >
+                  <option value="">Tous les mois</option>
+                  <option value="-01-">Janvier</option>
+                  <option value="-02-">Février</option>
+                  <option value="-03-">Mars</option>
+                  <option value="-04-">Avril</option>
+                  <option value="-05-">Mai</option>
+                  <option value="-06-">Juin</option>
+                  <option value="-07-">Juillet</option>
+                  <option value="-08-">Août</option>
+                  <option value="-09-">Septembre</option>
+                  <option value="-10-">Octobre</option>
+                  <option value="-11-">Novembre</option>
+                  <option value="-12-">Décembre</option>
+                </select>
+                <select
+                  value={typeFilter}
+                  onChange={handleTypeFilterChange}
+                  className="p-2 border rounded"
+                >
+                  <option value="">Tous les types</option>
+                  <option value="Informatique">Informatique</option>
+                  <option value="Marketing">Marketing</option>
+                  {/* Ajoutez d'autres options de types ici */}
+                </select>
               </div>
-            ))}
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredFormations.map((formation) => (
+                  <div key={formation.id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                    <div className="p-4">
+                      <h2 className="text-xl font-bold mb-2">{formation.title}</h2>
+                      <p className="text-gray-600 mb-2">{formation.type}</p>
+                      <div className="flex justify-between items-center">
+                        <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={() => openModal(formation)}>
+                          Détails
+                        </button>
+                        <p className={`text-sm font-semibold mt-2 ${formation.status === 'Terminée' ? 'text-green-600' : 'text-blue-600'}`}>
+                          {formation.status}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Modal */}
           {selectedFormation && (

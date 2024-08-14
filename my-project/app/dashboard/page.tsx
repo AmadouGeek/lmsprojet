@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/navigation';
 import { FaBars, FaBell, FaSearch, FaTimes } from 'react-icons/fa';
 import { AiFillHome, AiFillBook, AiFillMessage, AiFillCalendar, AiFillQuestionCircle, AiFillSetting, AiOutlineLogout } from 'react-icons/ai';
-import Link from 'next/link';  // Assurez-vous d'importer Link ici
+import Link from 'next/link';
 import { collection, addDoc, deleteDoc, doc, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth, addNotification } from '@/db/configfirebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Timestamp } from 'firebase/firestore';
+import Image from 'next/image';
 
 interface Formation {
   id: string;
@@ -25,6 +27,7 @@ interface Formation {
 
 const Dashboard = () => {
   const [user] = useAuthState(auth);
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFormation, setSelectedFormation] = useState<Formation | null>(null);
@@ -35,23 +38,32 @@ const Dashboard = () => {
   const [postulerFormations, setPostulerFormations] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
     const fetchFormations = async () => {
-      const formationsCollection = collection(db, 'formations');
-      const formationsSnapshot = await getDocs(formationsCollection);
-      const formationsList = formationsSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-        };
-      }) as Formation[];
-      setFormations(formationsList);
+      try {
+        const formationsCollection = collection(db, 'formations');
+        const formationsSnapshot = await getDocs(formationsCollection);
+        const formationsList = formationsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
+            endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+          };
+        }) as Formation[];
+        setFormations(formationsList);
+      } catch (error) {
+        console.error('Error fetching formations: ', error);
+      }
     };
 
     fetchFormations();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -127,7 +139,7 @@ const Dashboard = () => {
         <aside className={`bg-white w-64 h-full p-4 flex flex-col justify-between fixed z-50 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
           <div>
             <div className="flex items-center justify-between mb-8">
-              <img src="/asset/images/lms-logo.svg" alt="LMS Logo" className="w-16 h-16" />
+              <Image src="/asset/images/lms-logo.svg" alt="LMS Logo" className="w-16 h-16" width={64} height={64} />
               <button onClick={toggleSidebar} className="text-blue-600 text-xl">
                 <FaTimes />
               </button>
@@ -188,7 +200,7 @@ const Dashboard = () => {
               <button onClick={toggleSidebar} className="text-red-600 text-2xl">
                 <FaBars />
               </button>
-              <img src="/asset/images/lms-logo.svg" alt="LMS Logo" className="w-16 h-16 ml-4" />
+              <Image src="/asset/images/lms-logo.svg" alt="LMS Logo" className="w-16 h-16 ml-4" width={64} height={64} />
             </div>
             <div className="flex items-center space-x-4 ml-auto">
               <div className="relative">
@@ -204,10 +216,12 @@ const Dashboard = () => {
                 <span className="absolute top-0 right-0 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
               <div className="relative flex items-center">
-                <img
+                <Image
                   src="/pics/profile.jpg"
                   alt="Profile"
                   className="w-10 h-10 rounded-full"
+                  width={40}
+                  height={40}
                 />
                 <div className="ml-2 text-gray-700">{user?.displayName}</div>
               </div>
@@ -266,7 +280,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredFormations.map((formation) => (
                 <div key={formation.id} className="bg-white p-4 rounded-lg shadow-md">
-                  <img src={formation.image} alt={formation.title} className="w-full h-32 object-cover rounded-md mb-4" />
+                  <Image src={formation.image} alt={formation.title} className="w-full h-32 object-cover rounded-md mb-4" width={320} height={128} />
                   <h2 className="text-xl font-semibold mb-2">{formation.title}</h2>
                   <p>Type: {formation.type}</p>
                   <p>Date de début: {formation.startDate?.toLocaleDateString()}</p>
@@ -306,7 +320,7 @@ const Dashboard = () => {
                 <p className="mb-2">Heure: {selectedFormation.startTime} - {selectedFormation.endTime}</p>
                 <p className="mb-2">Lieu: {selectedFormation.location}</p>
                 <p className="mb-2">Description: {selectedFormation.description}</p>
-                <img src={selectedFormation.image} alt={selectedFormation.title} className="w-full h-48 object-cover rounded-md mb-4" />
+                <Image src={selectedFormation.image} alt={selectedFormation.title} className="w-full h-48 object-cover rounded-md mb-4" width={320} height={192} />
                 <button
                   onClick={closeModal}
                   className="mt-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-300"

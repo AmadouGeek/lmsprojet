@@ -1,13 +1,17 @@
-"use client";
+'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { FaBell, FaSearch, FaBars, FaTimes } from 'react-icons/fa';
 import { AiFillHome, AiFillCalendar, AiFillBook, AiFillMessage, AiFillQuestionCircle, AiFillSetting, AiOutlineLogout } from 'react-icons/ai';
 import 'react-calendar/dist/Calendar.css';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useRouter } from 'next/navigation';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '@/db/configfirebase';
 
 interface Formation {
-  id: number;
+  id: string;
   title: string;
   date: Date;
   time: string;
@@ -15,17 +19,40 @@ interface Formation {
   image: string;
 }
 
-const formations: Formation[] = [
-  { id: 1, title: 'Formation 1', date: new Date(2024, 6, 12), time: '10:00 - 12:00', description: 'Description de la formation 1', image: '/pics/formation1.jpg' },
-  { id: 2, title: 'Formation 2', date: new Date(2024, 6, 14), time: '14:00 - 16:00', description: 'Description de la formation 2', image: '/pics/formation2.jpg' },
-  // Ajouter plus de formations si nécessaire
-];
-
 const Calendrier = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [formations, setFormations] = useState<Formation[]>([]);
+  const [user] = useAuthState(auth);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    const fetchFormations = async () => {
+      const formationsQuery = query(
+        collection(db, 'formations'),
+        where('userId', '==', user.uid) // Assuming formations are tied to a user
+      );
+      const snapshot = await getDocs(formationsQuery);
+      const fetchedFormations = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          date: data.date.toDate(), // Assuming 'date' is stored as a Firestore timestamp
+        } as Formation;
+      });
+      setFormations(fetchedFormations);
+    };
+
+    fetchFormations();
+  }, [user, router]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -178,7 +205,7 @@ const Calendrier = () => {
                   alt="Profile"
                   className="w-10 h-10 rounded-full"
                 />
-                <div className="ml-2 text-gray-700">Alex Johnson</div>
+                <div className="ml-2 text-gray-700">{user?.displayName}</div>
               </div>
             </div>
           </header>
