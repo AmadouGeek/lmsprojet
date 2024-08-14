@@ -94,18 +94,6 @@ const MessagesAdmin = () => {
                   <span>Account</span>
                 </a>
               </Link>
-              <Link href="/parametresadmin" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillSetting className="text-blue-600" />
-                  <span>Paramètres</span>
-                </a>
-              </Link>
-              <Link href="/helpadmin" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillQuestionCircle className="text-blue-600" />
-                  <span>Help</span>
-                </a>
-              </Link>
               <Link href="/logoutadmin" legacyBehavior>
                 <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
                   <AiOutlineLogout className="text-blue-600" />
