@@ -12,7 +12,7 @@ const LoginPage = () => {
   };
 
   const handleFormateurLogin = () => {
-    router.push('/loginformateur');
+    router.push('/login');
   };
 
   return (
