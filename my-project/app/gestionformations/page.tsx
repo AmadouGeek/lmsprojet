@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
@@ -7,7 +7,11 @@ import { AiFillFile, AiFillBook, AiFillMessage, AiFillSetting, AiFillQuestionCir
 import Link from 'next/link';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+<<<<<<< HEAD
 import { db, collection, addDoc, getDocs, deleteDoc, doc, addNotification, updateDoc } from '@/db/configfirebase';
+=======
+import { db, collection,setDoc, addDoc, getDocs, deleteDoc, doc, addNotification } from '@/db/configfirebase';
+>>>>>>> 55aaeaab7d896657ae66bb7e6d7080607e90b6ec
 import { Timestamp } from 'firebase/firestore';
 
 interface Formation {
@@ -28,8 +32,7 @@ const AdminFormations = () => {
   const [formations, setFormations] = useState<Formation[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingFormation, setEditingFormation] = useState<Formation | null>(null);
-  const [newFormation, setNewFormation] = useState<Formation>({
-    id: '',
+  const [newFormation, setNewFormation] = useState<Omit<Formation, 'id'>>({
     title: '',
     description: '',
     type: 'Informatique',
@@ -62,8 +65,12 @@ const AdminFormations = () => {
   }, []);
 
   const handleDelete = async (id: string) => {
-    await deleteDoc(doc(db, 'formations', id));
-    setFormations(formations.filter(formation => formation.id !== id));
+    try {
+      await deleteDoc(doc(db, 'formations', id));
+      setFormations(formations.filter(formation => formation.id !== id));
+    } catch (error) {
+      console.error('Error deleting formation:', error);
+    }
   };
 
   const handleEdit = (formation: Formation) => {
@@ -73,6 +80,7 @@ const AdminFormations = () => {
   };
 
   const handleAdd = async () => {
+<<<<<<< HEAD
     if (editingFormation) {
       const formationRef = doc(db, 'formations', editingFormation.id);
       await updateDoc(formationRef, { ...newFormation });
@@ -97,6 +105,41 @@ const AdminFormations = () => {
       location: '',
       consultant: 'En attente',  // Réinitialiser le champ ici aussi
     });
+=======
+    try {
+      if (editingFormation) {
+        // Logique pour la mise à jour d'une formation existante
+        const formationRef = doc(db, 'formations', editingFormation.id);
+        await setDoc(formationRef, newFormation);
+        setFormations(
+          formations.map(f =>
+            f.id === editingFormation.id ? { ...newFormation, id: editingFormation.id } : f
+          )
+        );
+      } else {
+        // Ajouter une nouvelle formation
+        const docRef = await addDoc(collection(db, 'formations'), newFormation);
+        setFormations([...formations, { ...newFormation, id: docRef.id }]);
+        await addNotification('all', `Une nouvelle formation "${newFormation.title}" est disponible.`);
+      }
+    } catch (error) {
+      console.error('Error adding/updating formation:', error);
+    } finally {
+      setIsFormOpen(false);
+      setEditingFormation(null);
+      setNewFormation({
+        title: '',
+        description: '',
+        type: 'Informatique',
+        image: '',
+        startDate: null,
+        endDate: null,
+        startTime: '',
+        endTime: '',
+        location: '',
+      });
+    }
+>>>>>>> 55aaeaab7d896657ae66bb7e6d7080607e90b6ec
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -137,59 +180,41 @@ const AdminFormations = () => {
         <aside className="bg-white w-64 h-full p-4 flex flex-col justify-between fixed z-50">
           <div>
             <nav className="space-y-4">
-              <Link href="/dashboardadmin" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillFile className="text-blue-600" />
-                  <span>Dashboard</span>
-                </a>
+              <Link href="/dashboardadmin" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiFillFile className="text-blue-600" />
+                <span>Dashboard</span>
               </Link>
-              <Link href="/gestionformations" legacyBehavior>
-                <a className="block bg-red-700 text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillFile className="text-blue-600" />
-                  <span>Gérer les formations</span>
-                </a>
+              <Link href="/gestionformations" className="block bg-red-700 text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiFillFile className="text-blue-600" />
+                <span>Gérer les formations</span>
               </Link>
-              <Link href="/gestionformateurs" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillBook className="text-blue-600" />
-                  <span>Gérer les formateurs</span>
-                </a>
+              <Link href="/gestionformateurs" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiFillBook className="text-blue-600" />
+                <span>Gérer les formateurs</span>
               </Link>
-              <Link href="/messageadmin" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillMessage className="text-blue-600" />
-                  <span>Messages</span>
-                </a>
+              <Link href="/messageadmin" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiFillMessage className="text-blue-600" />
+                <span>Messages</span>
               </Link>
-              <Link href="/calendrieradmin" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillCalendar className="text-blue-600" />
-                  <span>Calendrier</span>
-                </a>
+              <Link href="/calendrieradmin" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiFillCalendar className="text-blue-600" />
+                <span>Calendrier</span>
               </Link>
-              <Link href="/adminaccount" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillSetting className="text-blue-600" />
-                  <span>Account</span>
-                </a>
+              <Link href="/adminaccount" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiFillSetting className="text-blue-600" />
+                <span>Account</span>
               </Link>
-              <Link href="/adminparametres" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillSetting className="text-blue-600" />
-                  <span>Paramètres</span>
-                </a>
+              <Link href="/adminparametres" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiFillSetting className="text-blue-600" />
+                <span>Paramètres</span>
               </Link>
-              <Link href="/adminhelp" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiFillQuestionCircle className="text-blue-600" />
-                  <span>Help</span>
-                </a>
+              <Link href="/adminhelp" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiFillQuestionCircle className="text-blue-600" />
+                <span>Help</span>
               </Link>
-              <Link href="/adminlogout" legacyBehavior>
-                <a className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
-                  <AiOutlineLogout className="text-blue-600" />
-                  <span>Logout</span>
-                </a>
+              <Link href="/adminlogout" className="block bg-white text-blue-600 hover:bg-red-700 hover:text-white py-2 px-4 rounded flex items-center space-x-2">
+                <AiOutlineLogout className="text-blue-600" />
+                <span>Logout</span>
               </Link>
             </nav>
           </div>

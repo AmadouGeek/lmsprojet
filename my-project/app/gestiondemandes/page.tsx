@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { FaBars, FaBell, FaSearch, FaTimes } from 'react-icons/fa';
+import { FaBars, FaBell, FaSearch } from 'react-icons/fa';
 import { AiFillDashboard, AiFillFile, AiFillBook, AiFillMessage, AiFillSetting, AiFillQuestionCircle, AiOutlineLogout, AiFillCalendar } from 'react-icons/ai';
 import Link from 'next/link';
-import { collection, getDocs, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-import { db, addNotification } from '@/db/configfirebase';
+import { collection, getDocs, doc as firestoreDoc, getDoc } from 'firebase/firestore';
+import { db } from '@/db/configfirebase';
 import { Timestamp } from 'firebase/firestore';
 
 interface Demande {
@@ -14,14 +14,10 @@ interface Demande {
   title: string;
   startDate: Date;
   endDate: Date;
-  startTime: string;
-  endTime: string;
+  type: string;
   location: string;
   description: string;
   image: string;
-  requestedBy: string;
-  requestDate: Date;
-  confirmed: boolean;
   requesterDetails: {
     name: string;
     profession: string;
@@ -31,59 +27,44 @@ interface Demande {
 
 const GestionDemandes = () => {
   const [demandes, setDemandes] = useState<Demande[]>([]);
-  const [confirmations, setConfirmations] = useState<{ [key: string]: boolean }>({});
+  const [selectedFormation, setSelectedFormation] = useState<Demande | null>(null);
 
   useEffect(() => {
     const fetchDemandes = async () => {
       const demandesCollection = collection(db, 'demandes');
       const demandesSnapshot = await getDocs(demandesCollection);
-      const demandesList = demandesSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-          requestDate: data.requestDate ? (data.requestDate as Timestamp).toDate() : null,
-          requesterDetails: data.requesterDetails || null,
-        };
-      }) as Demande[];
-      setDemandes(demandesList);
+      const demandesList = await Promise.all(
+        demandesSnapshot.docs.map(async (demandeDoc) => {
+          const data = demandeDoc.data();
+          const formationRef = firestoreDoc(db, 'formations', data.formationId);
+          const formationSnap = await getDoc(formationRef);
+
+          if (formationSnap.exists()) {
+            const formationData = formationSnap.data();
+            return {
+              id: demandeDoc.id,
+              ...formationData,
+              startDate: formationData.startDate ? (formationData.startDate as Timestamp).toDate() : null,
+              endDate: formationData.endDate ? (formationData.endDate as Timestamp).toDate() : null,
+              requesterDetails: data.requesterDetails || null,
+            };
+          }
+          return null;
+        })
+      );
+
+      setDemandes(demandesList.filter(Boolean) as Demande[]);
     };
 
-    const unsubscribe = onSnapshot(collection(db, 'demandes'), (snapshot) => {
-      const updatedDemandes = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          startDate: data.startDate ? (data.startDate as Timestamp).toDate() : null,
-          endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
-          requestDate: data.requestDate ? (data.requestDate as Timestamp).toDate() : null,
-          requesterDetails: data.requesterDetails || null,
-        };
-      }) as Demande[];
-      setDemandes(updatedDemandes);
-    });
-
     fetchDemandes();
-    return () => unsubscribe();
   }, []);
 
-  const toggleConfirmation = async (id: string, confirmed: boolean) => {
-    const demandeRef = doc(db, 'demandes', id);
-    await updateDoc(demandeRef, { confirmed: !confirmed });
+  const openModal = (formation: Demande) => {
+    setSelectedFormation(formation);
+  };
 
-    setConfirmations({
-      ...confirmations,
-      [id]: !confirmed,
-    });
-
-    const demande = demandes.find(demande => demande.id === id);
-    if (demande && !confirmed) {
-      // Ajouter une notification pour le formateur
-      await addNotification(demande.requestedBy, `Votre demande pour la formation "${demande.title}" a été confirmée.`);
-    }
+  const closeModal = () => {
+    setSelectedFormation(null);
   };
 
   return (
@@ -180,43 +161,49 @@ const GestionDemandes = () => {
           </header>
 
           <main className="flex-1 p-8 bg-gray-50 overflow-y-auto">
-            <h1 className="text-2xl font-semibold mb-4">Gérer les Demandes de Formations</h1>
+            <h1 className="text-2xl font-semibold mb-4">Demandes de Formations</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {demandes.map((demande) => (
                 <div key={demande.id} className="bg-white p-6 rounded-lg shadow-lg">
                   <img src={demande.image} alt={demande.title} className="w-full h-32 object-cover rounded-md mb-4" />
                   <h2 className="text-xl font-semibold mb-2">{demande.title}</h2>
-                  <p>Date de début : {demande.startDate?.toLocaleDateString()}</p>
-                  <p>Date de fin : {demande.endDate?.toLocaleDateString()}</p>
-                  <p>Heure : {demande.startTime} - {demande.endTime}</p>
-                  <p>{demande.description}</p>
-                  {demande.requesterDetails ? (
-                    <>
-                      <p className="mt-4">Demandé par : {demande.requesterDetails.name}</p>
-                      <p>Profession : {demande.requesterDetails.profession}</p>
-                      <p>Domaine d'intervention : {demande.requesterDetails.domain}</p>
-                    </>
-                  ) : (
-                    <p className="mt-4 text-red-500">Détails du formateur indisponibles</p>
-                  )}
-                  <p>Date de demande : {demande.requestDate?.toLocaleDateString()}</p>
-                  <div className="flex space-x-4 mt-4">
-                    <button
-                      onClick={() => toggleConfirmation(demande.id, demande.confirmed)}
-                      className={`py-2 px-4 rounded ${demande.confirmed ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} hover:${demande.confirmed ? 'bg-green-600' : 'bg-blue-600'} transition duration-300`}
-                    >
-                      {demande.confirmed ? 'Confirmée, cliquez pour annuler' : 'Confirmer'}
-                    </button>
-                    <button
-                      onClick={() => deleteDoc(doc(db, 'demandes', demande.id))}
-                      className="py-2 px-4 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
-                    >
-                      Refuser
-                    </button>
-                  </div>
+                  <p>Type: {demande.type}</p>
+                  <button
+                    onClick={() => openModal(demande)}
+                    className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-300"
+                  >
+                    Détails
+                  </button>
                 </div>
               ))}
             </div>
+
+            {/* Modal */}
+            {selectedFormation && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                <div className="bg-white p-6 rounded-lg w-96">
+                  <h2 className="text-2xl font-bold mb-4">{selectedFormation.title}</h2>
+                  <img src={selectedFormation.image} alt={selectedFormation.title} className="w-full h-48 object-cover rounded-md mb-4" />
+                  <p>Date de début : {selectedFormation.startDate?.toLocaleDateString()}</p>
+                  <p>Date de fin : {selectedFormation.endDate?.toLocaleDateString()}</p>
+                  <p>Lieu : {selectedFormation.location}</p>
+                  <p>Description : {selectedFormation.description}</p>
+                  {selectedFormation.requesterDetails && (
+                    <>
+                      <p>Nom: {selectedFormation.requesterDetails.name}</p>
+                      <p>Profession: {selectedFormation.requesterDetails.profession}</p>
+                      <p>Domaine: {selectedFormation.requesterDetails.domain}</p>
+                    </>
+                  )}
+                  <button
+                    className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+                    onClick={closeModal}
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            )}
           </main>
         </div>
       </div>

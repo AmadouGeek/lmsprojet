@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
-import { auth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from '@/db/configfirebase';
+import { auth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, db, setDoc, doc } from '@/db/configfirebase';
 
 const LoginPage = () => {
   const router = useRouter();
@@ -13,8 +13,24 @@ const LoginPage = () => {
   const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Vérifier si les données utilisateur existent déjà
+      const userDoc = doc(db, 'admins', user.uid);
+      const userDocSnapshot = await getDoc(userDoc);
+
+      if (!userDocSnapshot.exists()) {
+        // Si non, stocker les données de base
+        await setDoc(userDoc, {
+          firstName: user.displayName?.split(' ')[0] || '',
+          lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
+          email: user.email,
+          phone: user.phoneNumber || '',
+        });
+      }
+
+      router.push('/dashboardadmin');
     } catch (error) {
       console.error('Error signing in with Google: ', error);
     }
@@ -23,7 +39,12 @@ const LoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const user = result.user;
+
+      // Optionnel : Charger ou mettre à jour les informations de l'utilisateur après la connexion
+      // Ici, vous pouvez ajouter des données supplémentaires si nécessaire.
+
       router.push('/dashboard');
     } catch (error) {
       console.error('Error signing in: ', error);
