@@ -7,7 +7,7 @@ import { AiFillFile, AiFillBook, AiFillMessage, AiFillSetting, AiFillQuestionCir
 import Link from 'next/link';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { db, collection, addDoc, getDocs, deleteDoc, doc, addNotification } from '@/db/configfirebase';
+import { db, collection, addDoc, getDocs, deleteDoc, doc, addNotification, updateDoc } from '@/db/configfirebase';
 import { Timestamp } from 'firebase/firestore';
 
 interface Formation {
@@ -21,6 +21,7 @@ interface Formation {
   startTime: string;
   endTime: string;
   location: string;
+  consultant: string;  // Ajout du champ consultant
 }
 
 const AdminFormations = () => {
@@ -38,6 +39,7 @@ const AdminFormations = () => {
     startTime: '',
     endTime: '',
     location: '',
+    consultant: 'En attente',  // Ajout du champ consultant avec valeur par défaut
   });
 
   useEffect(() => {
@@ -72,7 +74,9 @@ const AdminFormations = () => {
 
   const handleAdd = async () => {
     if (editingFormation) {
-      // Update existing formation logic
+      const formationRef = doc(db, 'formations', editingFormation.id);
+      await updateDoc(formationRef, { ...newFormation });
+      setFormations(formations.map(f => (f.id === editingFormation.id ? newFormation : f)));
     } else {
       const docRef = await addDoc(collection(db, 'formations'), newFormation);
       setFormations([...formations, { ...newFormation, id: docRef.id }]);
@@ -91,6 +95,7 @@ const AdminFormations = () => {
       startTime: '',
       endTime: '',
       location: '',
+      consultant: 'En attente',  // Réinitialiser le champ ici aussi
     });
   };
 
@@ -129,7 +134,7 @@ const AdminFormations = () => {
       </Head>
       <div className="flex h-screen bg-gray-100">
         {/* Sidebar */}
-        <aside className={`bg-white w-64 h-full p-4 flex flex-col justify-between fixed z-50`}>
+        <aside className="bg-white w-64 h-full p-4 flex flex-col justify-between fixed z-50">
           <div>
             <nav className="space-y-4">
               <Link href="/dashboardadmin" legacyBehavior>
@@ -344,6 +349,7 @@ const AdminFormations = () => {
                   <p className="text-gray-700">Heure : {formation.startTime} - {formation.endTime}</p>
                   <p className="text-gray-700">Lieu : {formation.location}</p>
                   <p className="text-gray-700">Description : {formation.description}</p>
+                  <p className="text-gray-700">Consultant : {formation.consultant}</p> {/* Affichage du consultant */}
                   {formation.image && <img src={formation.image} alt={formation.title} className="mt-4" />}
                   <div className="flex space-x-4 mt-4">
                     <button onClick={() => handleEdit(formation)} className="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600 transition duration-300">
